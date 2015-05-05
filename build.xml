@@ -31,7 +31,7 @@
 	</target>
 
   <target name="deliverables" depends="javac" description="Create deliverables">
-    <jar destfile="../${java.build.platform}/services-opencrx/lib/opentdc-services-opencrx.jar">
+    <jar destfile="../${java.build.platform}/services-file/lib/opentdc-services-file.jar">
     	<zipfileset dir="${build.dir}" /> 
   	</jar>
   </target>
