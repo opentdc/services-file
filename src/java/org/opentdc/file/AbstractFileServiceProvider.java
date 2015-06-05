@@ -58,16 +58,30 @@ public class AbstractFileServiceProvider<T> {
 		ServletContext context,
 		String prefix
 	) throws IOException {
-		if (dataF == null) {
-			dataF = new File(context.getRealPath("/" + prefix + DATA_FN));
+		String _value = context.getInitParameter("isPersistent");  // true (= file) or false (= transient), default is true
+		if (_value != null) {
+			isPersistent = new Boolean(_value).booleanValue();
 		}
-		if (seedF == null) {
-			seedF = new File(context.getRealPath("/" + prefix + SEED_FN));
+		if (isPersistent == true) {
+			logger.info("FileServiceProvider is persistent");
+			if (dataF == null) {
+				dataF = new File(context.getRealPath("/" + prefix + DATA_FN));
+			}
+			if (seedF == null) {
+				seedF = new File(context.getRealPath("/" + prefix + SEED_FN));
+			}
+		}
+		else {
+			logger.info("FileServiceProvider is transient");
 		}
 	}
 	
 	protected List<T> importJson(
 			File f)  {
+		if (isPersistent == false) {
+			logger.info("importJson(): not importing data (transient)");
+			return new ArrayList<T>();
+		}
 		logger.info("importJson(" + f.getName() + "): importing data");
 		if (!f.exists()) {
 			logger.warning("importJson(" + f.getName()
@@ -88,7 +102,7 @@ public class AbstractFileServiceProvider<T> {
 			Gson _gson = new GsonBuilder().create();
 			Type _collectionType = new TypeToken<ArrayList<T>>() {}.getType();
 			_list = _gson.fromJson(_reader, _collectionType);
-			logger.info("importJson(" + f.getName() + "): json data converted");
+			logger.info("importJson(" + f.getName() + "): json data converted to type " + _collectionType.toString());
 		} catch (FileNotFoundException e1) {
 			logger.severe("importJson(" + f.getName()
 					+ "): file does not exist (2).");
@@ -111,7 +125,11 @@ public class AbstractFileServiceProvider<T> {
 
 	
 	protected List<T> importJson() throws IOException {
-		List<T> _companies = null;
+		if (isPersistent == false) {
+			logger.info("importJson(): not importing data (transient)");
+			return new ArrayList<T>();
+		}
+		List<T> _objects = null;
 		
 		// read the data file
 		// either read persistent data from DATA_FN
@@ -119,17 +137,17 @@ public class AbstractFileServiceProvider<T> {
 		if (dataF.exists()) {
 			logger.info("persistent data in file " + dataF.getName()
 					+ " exists.");
-			_companies = importJson(dataF);
+			_objects = importJson(dataF);
 		} else { // seeding the data
 			logger.info("persistent data in file " + dataF.getName()
 					+ " is missing -> trying to seed from " + seedF.getName());
 			// importing the seed data
-			_companies = importJson(seedF);
+			_objects = importJson(seedF);
 			// create the persistent data if it did not exist
-			if (isPersistent) {
+			if (isPersistent == true) {
 				try {
 					dataF.createNewFile();					
-					exportJson(_companies);
+					exportJson(_objects);
 				} 
 				catch (IOException _e) {
 					logger.severe("importJson(): IO exception when creating file "
@@ -139,19 +157,23 @@ public class AbstractFileServiceProvider<T> {
 			}
 		}
 
-		logger.info("importJson(): imported " + _companies.size()
-				+ " wtt objects");
-		return _companies;
+		logger.info("importJson(): imported " + _objects.size()
+				+ " objects");
+		return _objects;
 	}
 
-	protected void exportJson(Collection<T> values) {
+	protected void exportJson(Collection<T> objects) {
+		if (isPersistent == false) {
+			logger.info("exportJson(): not exporting data (transient)");
+			return;
+		}
 		logger.info("exportJson(" + dataF.getName() + "): exporting objects in json format");
 
 		Writer _writer = null;
 		try {
 			_writer = new OutputStreamWriter(new FileOutputStream(dataF));
 			Gson _gson = new GsonBuilder().setPrettyPrinting().create();
-			_gson.toJson(values, _writer);
+			_gson.toJson(objects, _writer);
 		} catch (FileNotFoundException e) {
 			logger.severe("exportJson(" + dataF.getName() + "): file not found.");
 			e.printStackTrace();
