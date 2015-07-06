@@ -76,6 +76,11 @@ public class AbstractFileServiceProvider<T> {
 		}
 	}
 	
+	protected String getPrincipal() 
+	{
+		return "DUMMY_USER";  // TODO: get principal from user session
+	}
+	
 	protected List<T> importJson(
 			File f)  {
 		if (isPersistent == false) {
