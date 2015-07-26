@@ -1,20 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<project name="opentdc-services-opencrx" basedir=".">
+<project name="opentdc-services-file" basedir=".">
 
 	<property environment="env"/>
 	<property name="java.build.platform" value="jre-1.7" />
 	<property name="cxf.lib" location="${env.CXF_HOME}/lib" />
 	<property name="junit.home" location="${env.JUNIT_HOME}" />
-	<property name="openmdx.home" location="../opt/openmdx-2.14.0+/" />
-	<property name="opencrx.home" location="../opt/opencrx-3.0.0+/" />
 	<property name="src.dir" value="src/java" />
 	<property name="build.dir" value="build/${java.build.platform}/bin" />
 	
 	<path id="project.class.path">
 		<fileset dir="${cxf.lib}" includes="*.jar" />
 		<fileset dir="${build.dir}" includes="*.class" />
-		<fileset dir="${openmdx.home}/${java.build.platform}/core/lib" includes="*.jar" />
-		<fileset dir="${opencrx.home}/${java.build.platform}/core/lib" includes="*.jar" />
 		<fileset dir="../${java.build.platform}/services-generic/lib/" includes="*.jar" />
 		<fileset dir="../opt/google/${java.build.platform}/gson/lib/" includes="*.jar" />
 	</path>
