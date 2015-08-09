@@ -40,6 +40,8 @@ import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
 
+import org.opentdc.util.LanguageCode;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -47,12 +49,13 @@ import com.google.gson.reflect.TypeToken;
 public class AbstractFileServiceProvider<T> {
 	protected static final String SEED_FN = "/seed.json";
 	protected static final String DATA_FN = "/data.json";
-	private static final Logger logger = Logger.getLogger(AbstractFileServiceProvider.class.getName());
+	protected static final Logger logger = Logger.getLogger(AbstractFileServiceProvider.class.getName());
 	
 	// instance variables
 	private File dataF = null;
 	private File seedF = null;
 	protected boolean isPersistent = true;
+	protected LanguageCode lang = null;
 
 	public AbstractFileServiceProvider(
 		ServletContext context,
@@ -74,11 +77,6 @@ public class AbstractFileServiceProvider<T> {
 		else {
 			logger.info("FileServiceProvider is transient");
 		}
-	}
-	
-	protected String getPrincipal() 
-	{
-		return "DUMMY_USER";  // TODO: get principal from user session
 	}
 	
 	protected List<T> importJson(
@@ -128,6 +126,10 @@ public class AbstractFileServiceProvider<T> {
 		return _list;
 	}
 
+	protected String getPrincipal() 
+	{
+		return "DUMMY_USER";  // TODO: get principal from user session
+	}
 	
 	protected List<T> importJson() throws IOException {
 		if (isPersistent == false) {
@@ -193,5 +195,46 @@ public class AbstractFileServiceProvider<T> {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Sets the current language code.
+	 * Resolution strategy:
+	 * 1) per request: query parameter 'lang'
+	 * 2) per user session: session parameter 'lang'
+	 * 3) per service: HttpServletContext (init param 'language' in web.xml configuration)
+	 * 4) default:  LanguageCode.getDefaultLanguageCode()
+	 * @param langCode the language code
+	 * @param context the servlet context
+	 * @return the language code applied
+	 */
+	public LanguageCode setLanguageCode(
+			String langCode, 
+			ServletContext context) {
+		// 1) per request (query) or 2) per user session:
+		if (langCode != null) {
+			try {
+				lang = LanguageCode.valueOf(langCode);
+			}
+			catch (IllegalArgumentException _ex) {
+				logger.warning("invalid LanguageCode <" + langCode + "> is ignored; applying defaults instead.");
+			}
+		} 
+		// 3) per service in web.xml configuration (init param language)
+		if (lang == null) {
+			String _langCode = context.getInitParameter("language");
+			try {
+				lang = LanguageCode.valueOf(_langCode);
+			}
+			catch (IllegalArgumentException _ex) {
+				logger.warning("invalid LanguageCode <" + langCode + "> in web.xml (init parameter language) is ignored; applying defaults instead.");
+			}
+		}
+		// 4) default
+		if (lang == null) {
+			lang = LanguageCode.getDefaultLanguageCode();
+		}
+		logger.info("setLanguageCode(" + langCode + ", context) -> " + lang.toString());
+		return lang;
 	}
 }
