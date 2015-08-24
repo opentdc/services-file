@@ -126,11 +126,6 @@ public class AbstractFileServiceProvider<T> {
 		return _list;
 	}
 
-	protected String getPrincipal() 
-	{
-		return "DUMMY_USER";  // TODO: get principal from user session
-	}
-	
 	protected List<T> importJson() throws IOException {
 		if (isPersistent == false) {
 			logger.info("importJson(): not importing data (transient)");
